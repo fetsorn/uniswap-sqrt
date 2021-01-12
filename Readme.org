@@ -1,0 +1,34 @@
+#+TITLE: Readme
+
+A fork of [[https://github.com/Uniswap/uniswap-v2-core][uniswap-v2-core]] and [[https://github.com/Uniswap/uniswap-v2-periphery][uniswap-v2-periphery]].
+
+ - UniswapV2Factory  - https://ropsten.etherscan.io/address/0x51CC50a754A1574d68F1f993c0Ac1b8C2ddD83bb
+ - UniswapV2Router02 - https://ropsten.etherscan.io/address/0x69Ee41620B0C05e9Ed6dEaeda818F8f54eccbC19
+
+* Changes
+
+ - Automated deployment with [[https://www.trufflesuite.com/truffle][Truffle]].
+ - Updated constant function formula in [[https://github.com/fetsorn/uniswap-sqrt/blob/185ae65b6cda0547c1bef061df8e8b7a5be531f1/contracts/periphery/libraries/UniswapV2Library.sol#L48][UniswapV2Library]]. Lower slippage with a square root function from [[https://github.com/abdk-consulting/abdk-libraries-solidity/blob/master/ABDKMath64x64.sol#L355][ABDKMath]].
+#+html: <p align="center"><img src="https://latex.codecogs.com/gif.latex?\inline&space;\sqrt{x*y}=k" title="\sqrt{x*y}=k" /></p>
+
+#+name: UniswapV2Library.sol
+#+begin_src solidity
+// given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
+function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {
+    require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');
+    require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
+    uint amountInWithFee = amountIn.mul(997);
+    uint numerator = amountInWithFee.mul(sqrt(reserveOut));
+    uint denominator = sqrt(reserveIn).mul(1000).add(amountInWithFee);
+    amountOut = numerator / denominator;
+}
+
+// given an output amount of an asset and pair reserves, returns a required input amount of the other asset
+function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) internal pure returns (uint amountIn) {
+    require(amountOut > 0, 'UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT');
+    require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
+    uint numerator = sqrt(reserveIn).mul(amountOut).mul(1000);
+    uint denominator = sqrt(reserveOut).sub(amountOut).mul(997);
+    amountIn = (numerator / denominator).add(1);
+}
+#+end_src
